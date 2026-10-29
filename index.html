@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Калькулятор зарплаты</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Зарплата">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f1f0f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0c17" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+/* Layout: phone-first "frosted glass" bento — soft aurora backdrop, translucent cards, the nearest payout as a lit gradient tile */
+:root{
+  --bg:#f1f0f7; --glass:rgba(255,255,255,.62); --glass-2:rgba(255,255,255,.42); --stroke:rgba(255,255,255,.75);
+  --paper:#ffffff; --ink:#1b1830; --muted:#6b6884; --line:rgba(27,24,48,.09);
+  --accent:#6b5cf6; --accent-2:#a35cf0; --accent-ink:#ffffff; --accent-soft:rgba(107,92,246,.12);
+  --minus:#d4513b; --minus-soft:rgba(212,81,59,.12); --hol:#d23f63; --off:rgba(27,24,48,.04);
+  --vac:#1f9e6a; --vac-soft:rgba(31,158,106,.14); --sick:#c07d0c; --sick-soft:rgba(192,125,12,.15);
+  --ot:#3a7bd5; --ot-soft:rgba(58,123,213,.14);
+  --blob1:#c8bdff; --blob2:#ffd3c2; --blob3:#b9f0dc;
+  --shadow:0 10px 30px -12px rgba(46,35,120,.25);
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d0c17; --glass:rgba(32,29,52,.55); --glass-2:rgba(40,36,64,.45); --stroke:rgba(255,255,255,.09);
+  --paper:#1d1a30; --ink:#eeecfa; --muted:#a19dbd; --line:rgba(255,255,255,.08);
+  --accent:#8d80ff; --accent-2:#c27bff; --accent-ink:#ffffff; --accent-soft:rgba(141,128,255,.16);
+  --minus:#ff8a73; --minus-soft:rgba(255,138,115,.14); --hol:#ff7c9c; --off:rgba(255,255,255,.03);
+  --vac:#4fd69c; --vac-soft:rgba(79,214,156,.15); --sick:#f2b84b; --sick-soft:rgba(242,184,75,.15);
+  --ot:#6ea8ff; --ot-soft:rgba(110,168,255,.15);
+  --blob1:#3b2d8f; --blob2:#5a2357; --blob3:#114a48;
+  --shadow:0 12px 34px -14px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d0c17; --glass:rgba(32,29,52,.55); --glass-2:rgba(40,36,64,.45); --stroke:rgba(255,255,255,.09);
+  --paper:#1d1a30; --ink:#eeecfa; --muted:#a19dbd; --line:rgba(255,255,255,.08);
+  --accent:#8d80ff; --accent-2:#c27bff; --accent-ink:#ffffff; --accent-soft:rgba(141,128,255,.16);
+  --minus:#ff8a73; --minus-soft:rgba(255,138,115,.14); --hol:#ff7c9c; --off:rgba(255,255,255,.03);
+  --vac:#4fd69c; --vac-soft:rgba(79,214,156,.15); --sick:#f2b84b; --sick-soft:rgba(242,184,75,.15);
+  --ot:#6ea8ff; --ot-soft:rgba(110,168,255,.15);
+  --blob1:#3b2d8f; --blob2:#5a2357; --blob3:#114a48;
+  --shadow:0 12px 34px -14px rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;border-radius:50%;filter:blur(60px);opacity:.85}
+.aurora i:nth-child(1){width:70vw;height:70vw;max-width:520px;max-height:520px;background:var(--blob1);top:-18vw;left:-20vw}
+.aurora i:nth-child(2){width:60vw;height:60vw;max-width:460px;max-height:460px;background:var(--blob2);top:30vh;right:-25vw}
+.aurora i:nth-child(3){width:65vw;height:65vw;max-width:480px;max-height:480px;background:var(--blob3);bottom:-20vw;left:-10vw}
+.wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-block:14px 44px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+.glass,.card,.tabs,.nav button{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border:1px solid var(--stroke);box-shadow:var(--shadow)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 2px 0}
+.hello{min-width:0}
+.hello h1{margin:0;font-size:1.45rem;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.hello p{margin:2px 0 0;font-size:.88rem;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-radius:999px;padding:4px;gap:2px;box-shadow:none}
+.tabs button{font:inherit;font-size:.86rem;font-weight:600;border:0;border-radius:999px;padding:8px 14px;background:transparent;color:var(--muted);cursor:pointer;transition:background .2s,color .2s}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.nav button{width:44px;height:44px;border-radius:50%;color:var(--ink);font-size:1.3rem;cursor:pointer;box-shadow:none;display:grid;place-items:center;padding:0}
+.navt{font-weight:700;font-size:1.25rem;text-align:center;letter-spacing:-.02em}
+.card{border-radius:26px;overflow:hidden}
+.hero{padding:12px}
+.lbl{font-size:.74rem;font-weight:600;letter-spacing:.02em;color:var(--muted)}
+.big{font-family:var(--f-num);font-size:2.4rem;font-weight:700;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.hero > .lbl,.hero > .big,.hero > .when,.hero > .chips{margin-left:8px;margin-right:8px}
+.hero > .lbl{margin-top:8px}
+.when{margin-top:6px;font-size:.92rem;color:var(--muted)}
+.when b{font-weight:600;color:var(--ink)}
+.pays{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pay{position:relative;min-width:0;padding:14px;border-radius:20px;background:var(--glass-2);border:1px solid var(--stroke);transition:transform .2s}
+.pay.next{background:linear-gradient(140deg,var(--accent) 0%,var(--accent-2) 100%);border-color:transparent;color:var(--accent-ink);box-shadow:0 14px 30px -14px var(--accent)}
+.pay.next .lbl,.pay.next .pdate,.pay.next .pdate b{color:rgba(255,255,255,.88)}
+.pay.next .pdate .diff{color:#fff;opacity:.95}
+.pay.next::after{content:"Скоро";position:absolute;top:12px;right:12px;font-size:.66rem;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.22);color:#fff}
+.pay.done{opacity:.55}
+.pay.vac{grid-column:1/-1;background:var(--vac-soft);border-color:transparent}
+.pay.vac .lbl{color:var(--vac)}
+.amt{font-family:var(--f-num);font-weight:700;font-size:clamp(1.15rem,5.6vw,1.6rem);line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.03em;white-space:nowrap}
+.pdate{font-size:.8rem;margin-top:6px;color:var(--muted);line-height:1.35}
+.pdate b{color:var(--ink);font-weight:600}
+.pdate .diff{display:block;color:var(--minus);margin-top:3px;font-weight:600}
+@media (max-width:350px){.pays{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{font-size:.78rem;font-weight:500;padding:5px 11px;border-radius:999px;background:var(--glass-2);border:1px solid var(--stroke);color:var(--muted)}
+.chip.warn{color:var(--minus);background:var(--minus-soft);border-color:transparent}
+.rows{list-style:none;margin:0 12px 12px;padding:4px 14px;border-radius:18px;background:var(--glass-2)}
+.rows li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.rows li:last-child{border-bottom:0}
+.rows li.sub{font-size:.82rem;color:var(--muted);padding-top:0}
+.rows li.head{padding-top:14px;border-bottom:0;font-size:.74rem;font-weight:600;color:var(--muted)}
+.v{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.neg{color:var(--minus)} .tot{font-weight:700}
+.cal{padding:16px 14px 14px}
+.calhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 4px 12px}
+.calhead .lbl{font-size:1rem;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.calhead .stat{font-family:var(--f-num);font-size:.88rem;font-weight:600;color:var(--muted)}
+.brushes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.brushes button{font:inherit;font-size:.72rem;line-height:1.2;padding:9px 2px;border-radius:14px;border:1px solid transparent;background:var(--glass-2);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px}
+.brushes button i{width:12px;height:12px;border-radius:50%;display:block}
+.brushes button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{font-size:.68rem;text-align:center;color:var(--muted);font-weight:600;padding-bottom:2px}
+.d{aspect-ratio:1/1;max-width:100%;border-radius:14px;border:1px solid transparent;background:var(--glass-2);color:var(--ink);
+  font:inherit;font-family:var(--f-num);font-weight:600;font-size:.95rem;display:flex;align-items:center;justify-content:center;position:relative;padding:0;cursor:pointer;transition:transform .12s}
+.d:active{transform:scale(.92)}
+.d.off{background:transparent;color:var(--muted);font-weight:500}
+.d.hol{color:var(--hol);font-weight:700}
+.d.tr::after{content:"";position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.6}
+.d.sat{border:1px dashed var(--muted)}
+.d.m-ab{background:var(--minus-soft);color:var(--minus);text-decoration:line-through}
+.d.m-vac{background:var(--vac-soft);color:var(--vac);font-weight:700}
+.d.m-sick{background:var(--sick-soft);color:var(--sick);font-weight:700}
+.d.m-ot{background:var(--ot-soft);color:var(--ot);font-weight:700}
+.d.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.calnote{font-size:.8rem;color:var(--muted);margin:12px 4px 0;min-height:1.2em}
+.calnote.err{color:var(--minus)}
+.sect{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.sect h2{font-size:1rem;margin:0;font-weight:700;letter-spacing:-.01em}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.full{grid-column:1/-1}
+label{font-size:.76rem;font-weight:600;color:var(--muted)}
+input,select,textarea{width:100%;font:inherit;font-family:var(--f-num);font-weight:600;font-size:1.05rem;color:var(--ink);
+  background:var(--glass-2);border:1px solid var(--stroke);border-radius:14px;padding:12px 14px;-webkit-appearance:none;appearance:none}
+input::placeholder,textarea::placeholder{color:var(--muted);font-weight:500;opacity:.8}
+select{font-family:var(--f-body);font-weight:500;font-size:.98rem}
+textarea{font-family:ui-monospace,Menlo,monospace;font-weight:400;font-size:.78rem;resize:vertical;min-height:70px;word-break:break-all}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;border-radius:14px;background:var(--glass-2);border:1px solid var(--stroke)}
+.seg button{font:inherit;font-size:.84rem;font-weight:500;padding:9px 4px;border:0;border-radius:11px;background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--paper);font-weight:700;box-shadow:0 2px 8px -2px rgba(0,0,0,.15)}
+.hint{font-size:.78rem;color:var(--muted);line-height:1.45}
+details{border-top:1px solid var(--line)}
+summary{padding:16px 18px;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+details[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+details .sect{padding-top:0}
+.btn{font:inherit;font-size:.9rem;font-weight:600;padding:12px 18px;border-radius:999px;border:0;background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink);cursor:pointer;box-shadow:0 10px 22px -12px var(--accent)}
+.btn.sec{background:var(--accent-soft);color:var(--accent);box-shadow:none}
+.btn.danger{background:var(--minus-soft);color:var(--minus);box-shadow:none}
+.btn.danger.armed{background:var(--minus);color:#fff}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.status{font-size:.82rem;color:var(--vac);min-height:1.1em}
+.status.err{color:var(--minus)}
+.safe{display:flex;gap:10px;align-items:flex-start;font-size:.86rem;line-height:1.45;padding:12px;border-radius:16px;background:var(--vac-soft)}
+.safe svg{flex:none;margin-top:2px;color:var(--vac)}
+.foot{font-size:.74rem;color:var(--muted);line-height:1.5;margin:0;padding:0 6px}
+.chart{padding:6px 14px 6px}
+.chart svg{display:block;width:100%;height:auto}
+.thr{padding:4px 20px 18px}
+.bar{height:10px;border-radius:99px;background:var(--glass-2);overflow:hidden;margin:8px 0 6px}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.ytable{width:100%;border-collapse:collapse;font-size:.86rem}
+.ytable th{font-size:.72rem;color:var(--muted);font-weight:600;text-align:right;padding:8px 4px;border-bottom:1px solid var(--line)}
+.ytable th:first-child,.ytable td:first-child{text-align:left}
+.ytable td{padding:9px 4px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-num);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ytable td:first-child{font-family:var(--f-body);font-weight:500}
+.ytable tr.fut td{color:var(--muted)}
+.ytable tr.cur td{color:var(--accent);font-weight:700}
+.ytable tbody tr{cursor:pointer}
+.tablewrap{overflow-x:auto;padding:6px 14px 10px}
+.tips{display:flex;flex-direction:column;gap:8px}
+.tip{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;font:inherit;width:100%;padding:12px 14px;border-radius:16px;border:1px solid var(--stroke);background:var(--glass-2);color:var(--ink);cursor:pointer}
+.tip[aria-pressed="true"]{background:var(--vac-soft);border-color:var(--vac)}
+.tip b{font-weight:600}
+.tip .ratio{font-family:var(--f-num);font-size:.85rem;color:var(--vac);white-space:nowrap;font-weight:700}
+.tip small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+#vbest{margin:12px -14px -14px !important}
+.topr{display:flex;align-items:center;gap:8px;flex:none}
+.eye{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;color:var(--ink);background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border:1px solid var(--stroke);transition:background .25s,color .25s,transform .15s}
+.eye[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.eye:active{transform:scale(.92)}
+.eye svg{width:20px;height:20px}
+.hello{flex:1}
+.hello h1,.hello p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hello h1{font-size:clamp(1.25rem,6vw,1.5rem)}
+.hello p{font-size:clamp(.74rem,3.4vw,.88rem)}
+
+.privacy .amt,.privacy .big,.privacy .v,.privacy .chip,.privacy .pdate .diff,.privacy .why small,.privacy .why summary #whyt,.privacy .ytable td:not(:first-child),.privacy .chart text,.privacy .why-v,.privacy #ythr,.privacy .tip .ratio{filter:blur(9px);transition:filter .3s}
+.privacy .chip{filter:blur(5px)}
+.amt,.big,.v,.chip,.ytable td,.why-v{transition:filter .3s,color .3s}
+.why{margin:0 12px 12px;border-radius:18px;background:var(--glass-2);border:0}
+.why summary{padding:13px 14px;font-size:.9rem}
+.why summary .q{display:flex;align-items:center;gap:8px}
+.why summary .q i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:.8rem;background:var(--minus-soft);color:var(--minus)}
+.why.plus summary .q i{background:var(--vac-soft);color:var(--vac)}
+.why .sect{padding:0 14px 14px;gap:10px}
+.why-cmp{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:.86rem;color:var(--muted)}
+.why-cmp .why-v{font-family:var(--f-num);font-weight:700;color:var(--ink);font-size:1rem}
+.why ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.why li{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:start}
+.why li .why-v{font-family:var(--f-num);font-weight:700;white-space:nowrap;font-size:.95rem}
+.why li .why-v.minus{color:var(--minus)} .why li .why-v.plus{color:var(--vac)}
+.why li span{font-size:.88rem;line-height:1.35}
+.why li small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+.nlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.nlist:empty{display:none}
+.nlist li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:14px;background:var(--glass-2);border:1px solid var(--stroke)}
+.nlist b{font-weight:600}
+.nlist small{display:block;color:var(--muted);font-size:.78rem;margin-top:1px}
+.nlist .yr{font-family:var(--f-num);font-weight:700;font-size:1.05rem;color:var(--accent);flex:none;width:3.2em}
+.nlist .info{flex:1;min-width:0}
+.nlist .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nlist .del{flex:none;width:32px;height:32px;border-radius:50%;border:0;background:var(--minus-soft);color:var(--minus);font-size:1.1rem;cursor:pointer;line-height:1}
+.nsum{font-size:.84rem;line-height:1.5}
+.nsum:empty{display:none}
+.nsum ul{margin:6px 0 0;padding-left:18px}
+.privacy .nlist small,.privacy .nsum b{filter:blur(6px)}
+.welcome{border:1.5px solid var(--accent)}
+.welcome h2{font-size:1.15rem}
+.prof{display:flex;flex-wrap:wrap;gap:8px}
+.prof button{font:inherit;font-size:.88rem;font-weight:600;padding:9px 14px;border-radius:999px;border:1px solid var(--stroke);background:var(--glass-2);color:var(--ink);cursor:pointer}
+.prof button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.inline{display:flex;gap:8px;align-items:stretch}
+.inline input{flex:1;min-width:0}
+.help ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.help b{font-weight:600}
+.suggest{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;padding:10px 12px;border-radius:14px;background:var(--accent-soft)}
+.suggest .btn{padding:8px 14px;font-size:.84rem}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
+/* motion */
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes slideL{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes dayIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes glow{0%,100%{box-shadow:0 14px 30px -14px var(--accent)}50%{box-shadow:0 18px 40px -10px var(--accent-2)}}
+@keyframes shine{from{transform:translateX(-120%) skewX(-20deg)}to{transform:translateX(220%) skewX(-20deg)}}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(8vw,6vh) scale(1.1)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-10vw,-5vh) scale(1.08)}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vw,-8vh) scale(.95)}}
+.aurora i:nth-child(1){animation:drift1 22s ease-in-out infinite}
+.aurora i:nth-child(2){animation:drift2 26s ease-in-out infinite}
+.aurora i:nth-child(3){animation:drift3 30s ease-in-out infinite}
+.boot .top,.boot .tabs,.boot .nav,.boot .card,.boot .foot{animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+.boot .nav{animation-delay:.05s}
+.boot .card:nth-of-type(1){animation-delay:.1s}
+.boot .card:nth-of-type(2){animation-delay:.18s}
+.boot .card:nth-of-type(3){animation-delay:.26s}
+.boot .card:nth-of-type(4){animation-delay:.34s}
+.anim-l{animation:slideL .42s cubic-bezier(.2,.8,.2,1) both}
+.anim-r{animation:slideR .42s cubic-bezier(.2,.8,.2,1) both}
+.anim-up{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.grid.enter .d{animation:dayIn .35s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 12ms)}
+.d.pop{animation:pop .32s ease-out}
+.pay{overflow:hidden}
+.pay.next{animation:glow 3.2s ease-in-out infinite}
+.pay.next::before{content:"";position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shine 3.2s ease-in-out infinite;pointer-events:none}
+.chart rect{transform-box:fill-box;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+.bar i{transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.tabs button,.seg button,.brushes button,.btn,.tip,.nav button{transition:background .25s,color .25s,transform .15s,box-shadow .25s}
+.btn:active,.tip:active,.nav button:active,.brushes button:active,.seg button:active{transform:scale(.96)}
+details .sect{animation:rise .35s cubic-bezier(.2,.8,.2,1) both}
+.amt,.big,.v{transition:color .3s}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass,.card,.tabs,.nav button{background:var(--paper)}}
+</style>
+</head>
+<body class="boot">
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="wrap">
+  <div class="top">
+    <div class="hello"><h1 id="hello">Привет</h1><p id="today"></p></div>
+    <div class="topr">
+      <button type="button" class="eye" id="eye" aria-pressed="false" aria-label="Скрыть суммы"></button>
+    </div>
+  </div>
+  <div class="tabs" role="group" aria-label="Режим">
+    <button type="button" id="tabM" aria-pressed="true">Месяц</button>
+    <button type="button" id="tabY" aria-pressed="false">Год</button>
+  </div>
+
+  <div class="nav" id="nav">
+    <button type="button" id="prev" aria-label="Назад">‹</button>
+    <div class="navt" id="navt"></div>
+    <button type="button" id="next" aria-label="Вперёд">›</button>
+  </div>
+
+  <!-- ===== MONTH ===== -->
+  <div id="viewM" style="display:contents">
+    <section class="card welcome" id="welcome" hidden>
+      <div class="sect">
+        <h2>Давайте настроим калькулятор</h2>
+        <span class="hint">Достаточно оклада — остальное можно уточнить потом в настройках ниже.</span>
+        <div class="field"><label for="wok">Оклад до вычета налога, ₽ в месяц</label><input id="wok" inputmode="decimal" placeholder="например, 85 000" autocomplete="off"></div>
+        <div class="field">
+          <label>Как вам платят аванс</label>
+          <div class="seg" id="wadv">
+            <button type="button" data-m="days">За дни 1–15</button>
+            <button type="button" data-m="pct">40% оклада</button>
+            <button type="button" data-m="fixed">Не знаю</button>
+          </div>
+          <span class="hint">«За дни 1–15» — как требует Трудовой кодекс, это самый частый вариант. Если не знаете, оставьте его.</span>
+        </div>
+        <div class="fields">
+          <div class="field"><label for="wad">Аванс, число</label><input id="wad" inputmode="numeric" value="25"></div>
+          <div class="field"><label for="wpd">Зарплата, число</label><input id="wpd" inputmode="numeric" value="10"></div>
+        </div>
+        <div class="btnrow"><button type="button" class="btn" id="wgo">Готово</button><label class="btn sec" for="ndflfile" style="cursor:pointer">Загрузить справку 2-НДФЛ</label></div>
+        <div class="status" id="wstatus"></div>
+      </div>
+    </section>
+    <section class="card" aria-live="polite">
+      <div class="hero">
+        <div class="pays">
+          <div class="pay" id="payA">
+            <div class="lbl">Аванс</div>
+            <div class="amt" id="advamt">—</div>
+            <div class="pdate" id="advwhen"></div>
+          </div>
+          <div class="pay" id="payZ">
+            <div class="lbl">Зарплата</div>
+            <div class="amt" id="final">—</div>
+            <div class="pdate" id="when"></div>
+          </div>
+          <div class="pay vac" id="payV" hidden>
+            <div class="lbl" id="vlbl">Отпускные</div>
+            <div class="amt" id="vamt">—</div>
+            <div class="pdate" id="vwhen"></div>
+          </div>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <ul class="rows" id="rows"></ul>
+      <details class="why" id="why" hidden>
+        <summary><span class="q"><i id="whyi">?</i><span id="whyt">Почему меньше?</span></span></summary>
+        <div class="sect">
+          <div class="why-cmp" id="whycmp"></div>
+          <ul id="whylist"></ul>
+        </div>
+      </details>
+    </section>
+
+    <section class="card cal">
+      <div class="calhead">
+        <div class="lbl">Табель</div>
+        <div class="stat" id="dstat"></div>
+      </div>
+      <div class="brushes" id="brushes" role="group" aria-label="Что отмечать">
+        <button type="button" data-b="ab"><i style="background:var(--minus-soft);border:1px solid var(--minus)"></i>Не работал</button>
+        <button type="button" data-b="vac"><i style="background:var(--vac-soft);border:1px solid var(--vac)"></i>Отпуск</button>
+        <button type="button" data-b="sick"><i style="background:var(--sick-soft);border:1px solid var(--sick)"></i>Больничный</button>
+        <button type="button" data-b="ot"><i style="background:var(--ot-soft);border:1px solid var(--ot)"></i>Работа в&nbsp;выходной</button>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="calnote" id="calnote"></div>
+      <details id="vbest" style="margin:10px -12px -12px">
+        <summary>Выгодные даты для отпуска</summary>
+        <div class="sect">
+          <span class="hint">Отпуск считается в календарных днях: выходные внутри тратят дни отпуска, праздники — нет. Нажмите на вариант, и дни отметятся в табеле.</span>
+          <div class="seg" id="vlen">
+            <button type="button" data-l="short">До недели</button>
+            <button type="button" data-l="mid">1–2 недели</button>
+            <button type="button" data-l="long">2 недели+</button>
+          </div>
+          <div class="tips" id="vtips"></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="sect">
+        <h2>Оклад и аванс</h2>
+        <div class="fields">
+          <div class="field full">
+            <label for="oklad">Оклад, до вычета ₽</label>
+            <input id="oklad" inputmode="decimal" placeholder="например, 100 000">
+          </div>
+          <div class="field full">
+            <label>Как считается аванс</label>
+            <div class="seg" id="advmode">
+              <button type="button" data-m="days">За дни 1–15</button>
+              <button type="button" data-m="pct">% оклада</button>
+              <button type="button" data-m="fixed">Сумма</button>
+            </div>
+          </div>
+          <div class="field" id="advvalwrap">
+            <label for="advval" id="advlbl">Аванс</label>
+            <input id="advval" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="advtax">Аванс платят</label>
+            <select id="advtax">
+              <option value="net">за вычетом НДФЛ</option>
+              <option value="gross">без вычета</option>
+            </select>
+          </div>
+          <div class="field full"><span class="hint" id="advhint"></span></div>
+          <div class="field full">
+            <label for="bonus">Разовая премия в этом месяце, ₽</label>
+            <input id="bonus" inputmode="decimal" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <details>
+        <summary>Даты выплат</summary>
+        <div class="sect">
+          <div class="fields">
+            <div class="field"><label for="advday">Аванс, число</label><input id="advday" inputmode="numeric"></div>
+            <div class="field"><label for="payday">Зарплата, число</label><input id="payday" inputmode="numeric"></div>
+          </div>
+          <span class="hint">Зарплата за месяц приходит в следующем месяце. Если день выплаты выпадает на выходной, деньги платят накануне.</span>
+        </div>
+      </details>
+
+      <details>
+        <summary>Надбавки и премии</summary>
+        <div class="sect">
+          <div class="fields">
+            <div class="field"><label for="bpct">Ежемесячная премия, %</label><input id="bpct" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="rk">Районный коэфф., %</label><input id="rk" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label for="sn">Северная надбавка, %</label><input id="sn" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <span class="hint">Премия в процентах начисляется пропорционально отработанным дням. Районный коэффициент 1,5 — это 50%.</span>
+        </div>
+      </details>
+
+      <details>
+        <summary>Отпуск и больничный</summary>
+        <div class="sect">
+          <div class="fields">
+            <div class="field full">
+              <label for="stazh">Страховой стаж</label>
+              <select id="stazh">
+                <option value="60">меньше 5 лет — 60%</option>
+                <option value="80">от 5 до 8 лет — 80%</option>
+                <option value="100">8 лет и больше — 100%</option>
+              </select>
+            </div>
+            <div class="field"><label for="avgvac">Средний в день для отпуска</label><input id="avgvac" inputmode="decimal" placeholder="авто"></div>
+            <div class="field"><label for="avgsick">Средний в день для больничного</label><input id="avgsick" inputmode="decimal" placeholder="авто"></div>
+          </div>
+          <span class="hint">Если оставить «авто», отпускные считаются как месячный доход ÷ 29,3 за каждый календарный день отпуска (праздники не входят), больничный — как доход за 2 года ÷ 730 × процент по стажу, но не больше 6 827,40 ₽ в день. Точные суммы есть в справке от бухгалтерии — впишите их, чтобы расчёт совпадал.</span>
+        </div>
+      </details>
+
+      <details>
+        <summary>НДФЛ и вычеты</summary>
+        <div class="sect">
+          <div class="fields">
+            <div class="field">
+              <label for="kids">Детей</label>
+              <select id="kids">
+                <option value="0">нет</option><option value="1">1</option><option value="2">2</option>
+                <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+              </select>
+            </div>
+            <div class="field"><label for="ytd0">Доход в этом году до найма</label><input id="ytd0" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <span class="hint">Ставка растёт с доходом за год: 13% до 2,4 млн, дальше 15%, 18%, 20%, 22%. Доход с начала года калькулятор складывает из ваших месяцев сам. Вычет на детей (1 400 / 2 800 / 6 000 ₽) действует, пока доход с начала года не больше 450 000 ₽.</span>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <!-- ===== YEAR ===== -->
+  <div id="viewY" style="display:contents" hidden>
+    <section class="card">
+      <div class="hero">
+        <div class="lbl">На руки за год</div>
+        <div class="big" id="ynet">—</div>
+        <div class="chips" id="ychips"></div>
+      </div>
+      <div class="chart" id="ychart"></div>
+      <div class="thr">
+        <div class="lbl">Порог 2,4 млн для ставки 15%</div>
+        <div class="bar"><i id="ybar"></i></div>
+        <div class="hint" id="ythr"></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="tablewrap">
+        <table class="ytable">
+          <thead><tr><th>Месяц, ₽</th><th>Начислено</th><th>НДФЛ</th><th>На руки</th></tr></thead>
+          <tbody id="ytbody"></tbody>
+        </table>
+      </div>
+      <div class="sect" style="padding-top:4px"><span class="hint">«Факт» — суммы из справки 2-НДФЛ. В справке они разложены по месяцу выплаты, поэтому, например, в январе может оказаться остаток за декабрь. Остальные месяцы рассчитаны по окладу и табелю. Нажмите на месяц, чтобы открыть его.</span></div>
+    </section>
+  </div>
+
+  <!-- ===== DATA ===== -->
+  <section class="card">
+    <div class="sect">
+      <h2>Ваши данные</h2>
+      <div class="safe">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2" fill="none"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none"/></svg>
+        <span>Всё хранится только на этом устройстве. Приложение ничего не отправляет в интернет и не загружает сторонние сервисы.</span>
+      </div>
+    </div>
+    <details id="profiles">
+      <summary>Профили семьи</summary>
+      <div class="sect">
+        <span class="hint">Если калькулятором пользуются несколько человек на одном телефоне, у каждого может быть свой профиль со своим окладом, табелем и справками.</span>
+        <div class="prof" id="proflist"></div>
+        <div class="field"><label for="pname">Имя в этом профиле</label><input id="pname" placeholder="например, Аня" autocomplete="off"></div>
+        <div class="field"><label for="pnew">Новый профиль</label><div class="inline"><input id="pnew" placeholder="Имя" autocomplete="off"><button type="button" class="btn sec" id="padd">Добавить</button></div></div>
+        <div class="btnrow"><button type="button" class="btn danger" id="pdel" hidden>Удалить этот профиль</button></div>
+        <div class="status" id="pstatus"></div>
+      </div>
+    </details>
+    <details class="help" id="help">
+      <summary>Как получить справку 2-НДФЛ</summary>
+      <div class="sect">
+        <ol>
+          <li>Откройте <b>Госуслуги</b> (приложение или gosuslugi.ru) и найдите в поиске «<b>Справка о доходах</b>».</li>
+          <li>Выберите «Справка о доходах и суммах налога» и <b>год</b>. Для точного расчёта нужны справки за <b>текущий год и два прошлых</b>.</li>
+          <li>Через несколько минут справка придёт в уведомления. Нажмите «<b>Скачать</b>» — сохранится архив .zip. На iPhone он окажется в «Файлах» → «Загрузки».</li>
+          <li>Здесь нажмите «<b>Загрузить справку</b>» и выберите архив. Распаковывать не нужно, можно выбрать сразу несколько.</li>
+          <li>Если менялись работодатели, справку присылает каждый из них — загрузите все.</li>
+        </ol>
+        <span class="hint">Подходят и PDF от бухгалтерии, и файлы .xml из личного кабинета налоговой. Сканы и фото не читаются.</span>
+      </div>
+    </details>
+    <details id="ndfl" open>
+      <summary>Справки 2-НДФЛ</summary>
+      <div class="sect">
+        <span class="hint">Подходит справка с Госуслуг (архив .zip), из личного кабинета налоговой (.xml) или PDF от бухгалтерии. Можно сразу несколько: за прошлые два года и за текущий. Калькулятор возьмёт из них доход по месяцам и сам посчитает средний заработок для отпуска и больничного. Файл обрабатывается на телефоне и никуда не отправляется, а ФИО, ИНН и паспорт не сохраняются.</span>
+        <label class="btn" for="ndflfile" style="text-align:center;cursor:pointer">Загрузить справку</label>
+        <input type="file" id="ndflfile" class="vh" accept=".zip,.xml,.pdf,application/zip,text/xml,application/xml,application/pdf" multiple>
+        <div class="status" id="ndflstatus" aria-live="polite"></div>
+        <ul class="nlist" id="ndfllist"></ul>
+        <div class="nsum" id="ndflsum"></div>
+      </div>
+    </details>
+    <details>
+      <summary>Резервная копия</summary>
+      <div class="sect">
+        <span class="hint">Код содержит оклад и табель. Храните его как пароль, например в Заметках с блокировкой.</span>
+        <div class="btnrow"><button type="button" class="btn" id="exp">Скопировать код</button></div>
+        <textarea id="code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Код резервной копии" placeholder="Вставьте сюда код, чтобы восстановить данные"></textarea>
+        <div class="btnrow"><button type="button" class="btn sec" id="pasteimp">Вставить из буфера и восстановить</button><button type="button" class="btn sec" id="imp">Восстановить из поля</button></div>
+        <div class="status" id="bstatus" aria-live="polite"></div>
+      </div>
+    </details>
+    <details>
+      <summary>Удалить данные</summary>
+      <div class="sect">
+        <span class="hint">Удалит оклад, настройки, отметки и справки текущего профиля с этого устройства. Отменить нельзя.</span>
+        <div class="btnrow"><button type="button" class="btn danger" id="wipe">Удалить всё</button></div>
+      </div>
+    </details>
+  </section>
+
+  <p class="foot"><span id="ver"></span> · Производственный календарь РФ, пятидневка: 2026 — постановление Правительства № 1466, 2027 — опубликованный график переносов. Для других лет учтены только выходные и праздники. Расчёт ориентировочный и может отличаться от расчётного листка.</p>
+</div>
+
+<script>
+"use strict";
+const CAL={
+  2026:{off:["01-01","01-02","01-05","01-06","01-07","01-08","01-09","02-23","03-09","05-01","05-11","06-12","11-04","12-31"],work:[]},
+  2027:{off:["01-01","01-04","01-05","01-06","01-07","01-08","02-22","02-23","03-08","05-03","05-10","06-14","11-04","11-05","12-31"],work:["02-20"]}
+};
+const HOL=["01-01","01-02","01-03","01-04","01-05","01-06","01-07","01-08","02-23","03-08","05-01","05-09","06-12","11-04"];
+const MN=["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+const MS=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+const MG=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const WD=["вс","пн","вт","ср","чт","пт","сб"];
+const EXAMPLE=100000, APP_VER="1.0 · 29.10.2026";
+// Предельная база для взносов по годам: из неё считается максимум больничного
+const BASE_LIM={2021:966000,2022:1032000,2023:1917000,2024:2225000,2025:2759000,2026:2979000};
+const MROT={2025:22440,2026:27093};
+const sickCap=y=>{const a=BASE_LIM[y-2],b=BASE_LIM[y-1];return a&&b?(a+b)/730:6827.40};
+const sickMin=y=>(MROT[y]||MROT[2026])*24/730;
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const num=v=>{const x=parseFloat(String(v??"").replace(/\s/g,"").replace(",","."));return isFinite(x)?x:NaN};
+const r2=n=>Math.round(n*100)/100;
+const rub=n=>r2(n).toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₽";
+const rub0=n=>Math.round(n).toLocaleString("ru-RU")+" ₽";
+const int0=n=>Math.round(n).toLocaleString("ru-RU");
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const plural=(n,a,b,c)=>{const m10=n%10,m100=n%100;return m10===1&&m100!==11?a:[2,3,4].includes(m10)&&![12,13,14].includes(m100)?b:c};
+
+function dayType(y,m,d){
+  const key=pad(m)+"-"+pad(d), w=new Date(y,m-1,d).getDay(), we=w===0||w===6, hol=HOL.includes(key), c=CAL[y];
+  if(c){
+    if(c.work.includes(key)) return {work:true,hol:false,sat:true};
+    if(c.off.includes(key)) return {work:false,hol,tr:!hol};
+    return {work:!we,hol};
+  }
+  return {work:!we&&!hol,hol};
+}
+function payDate(y,m,day){
+  const last=new Date(y,m,0).getDate();
+  const dt=new Date(y,m-1,Math.min(Math.max(1,day),last));
+  for(let i=0;i<20&&!dayType(dt.getFullYear(),dt.getMonth()+1,dt.getDate()).work;i++) dt.setDate(dt.getDate()-1);
+  return dt;
+}
+const BR=[[2.4e6,.13],[5e6,.15],[20e6,.18],[50e6,.20],[Infinity,.22]];
+function taxCum(x){let t=0,prev=0;for(const[lim,r]of BR){if(x<=prev)break;t+=(Math.min(x,lim)-prev)*r;prev=lim}return t}
+// НДФЛ нарастающим итогом с округлением до рубля, как в бухгалтерии
+const taxD=(a,b)=>Math.round(taxCum(b))-Math.round(taxCum(a));
+function rateAt(x){for(const[lim,r]of BR) if(x<lim) return r; return .22}
+function kidsDed(k){let s=0;for(let i=1;i<=k;i++) s+=i===1?1400:i===2?2800:6000;return s}
+
+// ---------- storage (только localStorage этого устройства) ----------
+const DEF={oklad:"",mode:"days",advval:"",advtax:"net",advday:"25",payday:"10",bpct:"",rk:"",sn:"",kids:"0",ytd0:"",stazh:"60",avgvac:"",avgsick:"",vlen:"mid"};
+let S={...DEF}, M={}, N=[];
+// Профили: у каждого члена семьи свои данные на этом устройстве
+let P={list:[{id:"main",name:""}],cur:"main"};
+try{const o=JSON.parse(localStorage.getItem("zp-prof")||"null");if(o&&Array.isArray(o.list)&&o.list.length) P=o}catch(e){}
+const dataKey=()=>P.cur==="main"?"zp3":"zp3:"+P.cur;
+const saveP=()=>{try{localStorage.setItem("zp-prof",JSON.stringify(P))}catch(e){}};
+const curName=()=>((P.list.find(x=>x.id===P.cur)||{}).name||"").trim();
+function load(){
+  S={...DEF}; M={}; N=[];
+  try{
+    const raw=localStorage.getItem(dataKey());
+    if(raw){const o=JSON.parse(raw);Object.assign(S,o.S||{});M=o.M||{};N=Array.isArray(o.N)?o.N:[]}
+    else if(P.cur==="main"){ // перенос данных из прошлой версии
+      const s2=JSON.parse(localStorage.getItem("zp2-settings")||"null"), m2=JSON.parse(localStorage.getItem("zp2-months")||"null");
+      if(s2){for(const k in DEF) if(k in s2) S[k]=s2[k]}
+      if(m2){for(const k in m2){const d={};(m2[k].ab||[]).forEach(x=>d[x]="ab");M[k]={d,bonus:m2[k].bonus||""}}}
+    }
+  }catch(e){}
+}
+function save(){try{localStorage.setItem(dataKey(),JSON.stringify({v:3,S,M,N}))}catch(e){}}
+load();
+const now=new Date(); let Y=now.getFullYear(), Mo=now.getMonth()+1, view="m", brush="ab";
+const keyOf=(y,m)=>y+"-"+pad(m);
+let SIM=null, SIMB=null;
+const recOf=(y,m)=>M[keyOf(y,m)]||{d:{},bonus:""};
+function rec(){const k=keyOf(Y,Mo);if(!M[k])M[k]={d:{},bonus:""};return M[k]}
+
+// ---------- расчёт месяца ----------
+function calcMonth(y,m,ytd){
+  const R=recOf(y,m), marks=(SIM&&SIM[keyOf(y,m)])||R.d||{}, days=new Date(y,m,0).getDate();
+  const okIn=num(S.oklad), example=!(okIn>0), oklad=example?EXAMPLE:okIn;
+  const coef=1+((num(S.rk)||0)+(num(S.sn)||0))/100, bp=(num(S.bpct)||0)/100;
+  let total=0,worked=0,h1w=0,ab=0,ot=0,vac=0,sick=0;
+  for(let d=1;d<=days;d++){
+    const t=dayType(y,m,d), mk=marks[d];
+    if(t.work){total++; if(!mk||mk==="ot"){worked++; if(d<=15)h1w++} else if(mk==="ab") ab++}
+    else if(mk==="ot") ot++;
+    if(mk==="vac"&&!t.hol) vac++;
+    if(mk==="sick") sick++;
+  }
+  const dayRate=total?oklad/total:0;
+  const base=dayRate*worked, prem=base*bp, otPay=dayRate*2*ot, bonus=num(SIMB!==null?SIMB:R.bonus)||0;
+  const pre=base+prem+otPay+bonus, north=pre*(coef-1);
+  const sal=r2(pre+north);
+  const monthly=oklad*(1+bp)*coef;
+  const avgVac=num(S.avgvac)>0?num(S.avgvac):monthly/29.3;
+  const vacPay=r2(vac*avgVac);
+  const pct=(+S.stazh||60)/100;
+  const avgSick=Math.max(sickMin(y),Math.min(num(S.avgsick)>0?num(S.avgsick):monthly*24/730,sickCap(y)));
+  const sickPay=r2(sick*avgSick*pct);
+  const gross=sal+vacPay+sickPay;
+  const kids=+S.kids||0, ded=(kids&&ytd+gross<=450000)?Math.min(kidsDed(kids),gross):0;
+  const tSal=taxD(ytd,ytd+Math.max(0,sal-ded));
+  const b1=ytd+Math.max(0,sal-ded);
+  const tVac=taxD(b1,b1+vacPay);
+  const tSick=taxD(b1+vacPay,b1+vacPay+sickPay);
+  let adv=0;
+  const A=advOf(y,m);
+  if(A.mode==="days") adv=total?oklad*coef*h1w/total:0;
+  else if(A.mode==="pct") adv=oklad*(num(A.val)||0)/100;
+  else adv=num(A.val)||0;
+  adv=r2(adv);
+  const advNet=A.tax==="net"?adv-Math.round(adv*rateAt(ytd)):adv;
+  const salNet=sal-tSal;
+  return {example,oklad,total,worked,ab,ot,vac,sick,base,prem,otPay,bonus,north,sal,vacPay,sickPay,gross,ded,
+    tSal,tVac,tSick,tax:tSal+tVac+tSick,salNet,vacNet:vacPay-tVac,sickNet:sickPay-tSick,adv,advNet,fin:salNet-advNet,
+    net:gross-(tSal+tVac+tSick),pct,ytd,A};
+}
+function advOf(y,m){
+  let yy=y,mm=m;
+  for(let i=0;i<60;i++){const a=(M[keyOf(yy,mm)]||{}).adv; if(a) return {...a,own:i===0,from:[yy,mm]}; mm--; if(mm<1){mm=12;yy--}}
+  return {mode:S.mode,val:S.advval,tax:S.advtax,own:false,from:null};
+}
+function calcYear(y){
+  let ytd=num(S.ytd0)||0; const out=[];
+  for(let m=1;m<=12;m++){let c=calcMonth(y,m,ytd);const f=num(recOf(y,m).fact);
+    if(f>0){const t=taxD(ytd,ytd+f);c={...c,gross:f,tax:t,net:f-t,fact:true}}
+    out.push(c);ytd+=c.gross}
+  return out;
+}
+
+// ---------- привязка полей ----------
+["oklad","advday","payday","bpct","rk","sn","kids","ytd0","stazh","avgvac","avgsick"].forEach(id=>{
+  const el=$(id); el.value=S[id]??"";
+  el.addEventListener("input",()=>{S[id]=el.value;save();render()});
+});
+$("bonus").addEventListener("input",()=>{rec().bonus=$("bonus").value;save();render()});
+function setAdv(patch){const cur=advOf(Y,Mo);rec().adv={mode:cur.mode,val:cur.val,tax:cur.tax,...patch};save();render()}
+document.querySelectorAll("#advmode button").forEach(b=>b.addEventListener("click",()=>{
+  const cur=advOf(Y,Mo); if(cur.mode===b.dataset.m) return;
+  const m=b.dataset.m; setAdv({mode:m,val:m==="pct"?"40":m==="fixed"?"":cur.val});
+}));
+$("advval").addEventListener("input",()=>setAdv({val:$("advval").value}));
+$("advtax").addEventListener("change",()=>setAdv({tax:$("advtax").value}));
+document.querySelectorAll("#brushes button").forEach(b=>b.addEventListener("click",()=>{brush=b.dataset.b;note("");render()}));
+$("prev").onclick=()=>{if(view==="y")Y--;else{Mo--;if(Mo<1){Mo=12;Y--}}note("");dir=-1;render()};
+$("next").onclick=()=>{if(view==="y")Y++;else{Mo++;if(Mo>12){Mo=1;Y++}}note("");dir=1;render()};
+$("tabM").onclick=()=>{if(view==="m")return;view="m";dir=2;render()};
+$("tabY").onclick=()=>{if(view==="y")return;view="y";dir=2;render()};
+// свайп влево/вправо по экрану меняет месяц
+(()=>{let x0=null,y0=0;
+  document.addEventListener("touchstart",e=>{const t=e.target;if(t.closest("input,textarea,select,.tablewrap"))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+  document.addEventListener("touchend",e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;
+    if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.6)(dx<0?$("next"):$("prev")).click()},{passive:true});
+})();
+
+let noteMsg="",noteErr=false;
+function note(s,err){noteMsg=s;noteErr=!!err}
+
+function tapDay(d,t){
+  popDay=d;
+  const r=rec(), cur=r.d[d];
+  if(cur===brush){delete r.d[d];note("");save();render();return}
+  const ok = brush==="ab" ? t.work : brush==="ot" ? !t.work : brush==="vac" ? !t.hol : true;
+  if(!ok){
+    note(brush==="ab"?"«Не работал» ставится только на рабочий день.":brush==="ot"?"«Работа в выходной» ставится только на выходной или праздник.":"Праздники не входят в отпуск — этот день не оплачивается отпускными.",true);
+    render();return;
+  }
+  r.d[d]=brush; note(""); save(); render();
+}
+
+function fmtDate(dt){return dt.getDate()+" "+MG[dt.getMonth()]+", "+WD[dt.getDay()]}
+function until(dt){
+  const t=new Date();t.setHours(0,0,0,0);const n=Math.round((dt-t)/864e5);
+  if(n<0) return "уже выплачено"; if(n===0) return "сегодня"; if(n===1) return "завтра";
+  return "через "+n+" "+plural(n,"день","дня","дней");
+}
+
+// ---------- отрисовка ----------
+const RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+function tween(el,to,fmt,from){
+  if(!el) return;
+  const a=from!==undefined?from:(el._v!==undefined?el._v:0); el._v=to;
+  cancelAnimationFrame(el._raf);
+  if(RM||Math.abs(to-a)<0.005){el.textContent=fmt(to);return}
+  const t0=performance.now(), D=Math.min(1100,500+Math.log10(Math.abs(to-a)+1)*110);
+  const step=t=>{const k=Math.min(1,(t-t0)/D), e=1-Math.pow(1-k,4);
+    el.textContent=fmt(a+(to-a)*e); if(k<1) el._raf=requestAnimationFrame(step)};
+  el._raf=requestAnimationFrame(step);
+}
+const PREV={};
+function tweenRows(box){
+  box.querySelectorAll(".v").forEach(el=>{
+    const m=/^(−?)([\d\s\u00a0\u202f]+,\d{2}) ₽$/.exec(el.textContent.trim()); if(!m) return;
+    const n=parseFloat(m[2].replace(/[\s\u00a0\u202f]/g,"").replace(",","."));
+    const key=box.id+"|"+(el.previousElementSibling?el.previousElementSibling.textContent.replace(/\d+/g,"#"):"");
+    const from=PREV[key]!==undefined?PREV[key]:0; PREV[key]=n;
+    tween(el,n,x=>m[1]+rub(x),from);
+  });
+}
+let dir=0;
+function play(els,cls){if(RM) return;els.forEach(el=>{if(!el) return;el.classList.remove("anim-l","anim-r","anim-up");void el.offsetWidth;el.classList.add(cls)})}
+let popDay=null;
+const EYE_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none"/><circle cx="12" cy="12" r="3" fill="none"/></svg>';
+const EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18" fill="none"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3" fill="none"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" fill="none"/></svg>';
+function applyEye(){const on=S.hide==="1";document.body.classList.toggle("privacy",on);$("eye").setAttribute("aria-pressed",String(on));$("eye").setAttribute("aria-label",on?"Показать суммы":"Скрыть суммы");$("eye").innerHTML=on?EYE_OFF:EYE_ON}
+$("eye").onclick=()=>{S.hide=S.hide==="1"?"":"1";save();applyEye()};
+applyEye();
+
+function dayList(arr){ // 12, 13, 14 → «12–14»
+  if(!arr.length) return "";
+  const out=[];let a=arr[0],b=arr[0];
+  for(let i=1;i<=arr.length;i++){const x=arr[i];if(x===b+1){b=x;continue}out.push(a===b?String(a):b===a+1?a+", "+b:a+"–"+b);a=b=x}
+  return out.join(", ");
+}
+function explain(c){
+  const key=keyOf(Y,Mo), rr=recOf(Y,Mo), marks=rr.d||{};
+  const ytd=c.ytd;
+  const run=(m,bonus)=>{SIM={[key]:m};SIMB=bonus;try{return calcMonth(Y,Mo,ytd)}finally{SIM=null;SIMB=null}};
+  const base=run({}, "0");
+  const steps=[["ab","Не работал"],["sick","Больничный"],["vac","Отпуск"],["ot","Работа в выходные"]];
+  let cur={}, prev=base; const items=[];
+  for(const [k] of steps){
+    const days=Object.keys(marks).filter(d=>marks[d]===k).map(Number).sort((a,b)=>a-b);
+    if(!days.length) continue;
+    days.forEach(d=>cur[d]=k);
+    const now=run({...cur},"0"), dz=now.fin-prev.fin;
+    let label,sub="";
+    const n=days.length, dd=dayList(days)+" "+MG[Mo-1].replace(/я$/,"я");
+    if(k==="ab"){label=n+" "+plural(n,"день","дня","дней")+" без оплаты";sub=dd}
+    if(k==="sick"){label="Больничный, "+n+" "+plural(n,"день","дня","дней");sub=dd+". Пособие "+rub0(now.sickNet-prev.sickNet)+" придёт отдельно"}
+    if(k==="vac"){const w=days.filter(d=>dayType(Y,Mo,d).work).length;label="Отпуск, "+w+" "+plural(w,"рабочий день","рабочих дня","рабочих дней");sub=dd+". Отпускные "+rub0(now.vacNet-prev.vacNet)+" придут отдельно"}
+    if(k==="ot"){label="Работа в выходные, "+n+" "+plural(n,"день","дня","дней")+" × 2";sub=dd}
+    if(Math.abs(dz)>=1) items.push({dz,label,sub});
+    prev=now;
+  }
+  const bon=num(rr.bonus)||0;
+  if(bon){const now=run({...cur},rr.bonus);const dz=now.fin-prev.fin;if(Math.abs(dz)>=1) items.push({dz,label:"Разовая премия",sub:rub0(bon)+" до вычета НДФЛ"});prev=now}
+  const rest=c.fin-prev.fin;
+  if(Math.abs(rest)>=1) items.push({dz:rest,label:"Прочее",sub:"налог, вычеты и округления"});
+  return {base,items,delta:c.fin-base.fin};
+}
+function renderWhy(c){
+  const box=$("why"), E=explain(c);
+  if(Math.abs(E.delta)<1||!E.items.length){box.hidden=true;return}
+  box.hidden=false;
+  const minus=E.delta<0;
+  box.classList.toggle("plus",!minus);
+  $("whyi").textContent=minus?"−":"+";
+  $("whyt").textContent=(minus?"Почему меньше на ":"Почему больше на ")+rub0(Math.abs(E.delta))+"?";
+  $("whycmp").innerHTML='Обычно <span class="why-v">'+rub0(E.base.fin)+'</span> → в этом месяце <span class="why-v">'+rub0(c.fin)+"</span>";
+  $("whylist").innerHTML=E.items.map(it=>'<li><span class="why-v '+(it.dz<0?"minus":"plus")+'">'+(it.dz<0?"−":"+")+rub0(Math.abs(it.dz))+'</span><span>'+it.label+(it.sub?"<small>"+it.sub+"</small>":"")+"</span></li>").join("");
+}
+function greet(){
+  const h=new Date().getHours(), d=new Date();
+  const nm=curName();
+  $("hello").textContent=(h<5?"Доброй ночи":h<12?"Доброе утро":h<18?"Добрый день":"Добрый вечер")+(nm?", "+nm:"");
+  $("today").textContent=cap(WD[d.getDay()]==="вс"?"воскресенье":["","понедельник","вторник","среда","четверг","пятница","суббота"][d.getDay()])+", "+d.getDate()+" "+MG[d.getMonth()];
+}
+// ---------- первый запуск ----------
+let wMode="days";
+function renderWelcome(){
+  const need=!(num(S.oklad)>0);
+  $("welcome").hidden=!need;
+  document.querySelectorAll("#wadv button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===wMode)));
+}
+document.querySelectorAll("#wadv button").forEach(b=>b.onclick=()=>{wMode=b.dataset.m;renderWelcome()});
+$("wgo").onclick=()=>{
+  const v=num($("wok").value);
+  if(!(v>0)){$("wstatus").className="status err";$("wstatus").textContent="Введите оклад — например, 85000.";$("wok").focus();return}
+  S.oklad=String(v); S.mode=wMode==="fixed"?"days":wMode; S.advval=wMode==="pct"?"40":"";
+  const ad=Math.round(num($("wad").value)), pd=Math.round(num($("wpd").value));
+  if(ad>=1&&ad<=31) S.advday=String(ad); if(pd>=1&&pd<=31) S.payday=String(pd);
+  save(); syncAll(); render();
+};
+function render(){
+  greet(); renderWelcome();
+  applyEye();
+  const d0=dir; dir=0;
+  $("tabM").setAttribute("aria-pressed",String(view==="m"));
+  $("tabY").setAttribute("aria-pressed",String(view==="y"));
+  $("viewM").hidden=view!=="m"; $("viewY").hidden=view!=="y";
+  $("viewM").style.display=view==="m"?"contents":"none";
+  $("viewY").style.display=view==="y"?"contents":"none";
+  $("navt").textContent=view==="y"?String(Y):cap(MN[Mo-1])+" "+Y;
+  if(view==="y") d0y=!!d0||d0y;
+  view==="y"?renderYear():renderMonth();
+  d0y=false;
+  if(d0){
+    const els=[$("navt"),...document.querySelectorAll(view==="y"?"#viewY > .card":"#viewM > .card")];
+    play(els,d0===-1?"anim-l":d0===1?"anim-r":"anim-up");
+    if(view==="m"&&!RM){const g=$("grid");g.classList.remove("enter");void g.offsetWidth;g.classList.add("enter");setTimeout(()=>g.classList.remove("enter"),900)}
+  }
+}
+
+function renderMonth(){
+  $("bonus").value=rec().bonus||"";
+  const A=advOf(Y,Mo);
+  document.querySelectorAll("#advmode button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===A.mode)));
+  if(document.activeElement!==$("advval")) $("advval").value=A.val??"";
+  $("advtax").value=A.tax||"net";
+  $("advhint").textContent=A.own?"Аванс задан для "+MG[Mo-1]+" — так же будет и в следующих месяцах, пока не измените."
+    :A.from?"Как в "+["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"][A.from[1]-1]+(A.from[0]!==Y?" "+A.from[0]:"")+". Измените, чтобы задать для этого месяца."
+    :"Измените, чтобы задать аванс для этого месяца.";
+  document.querySelectorAll("#brushes button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.b===brush)));
+  $("advvalwrap").hidden=A.mode==="days";
+  $("advlbl").textContent=A.mode==="pct"?"Аванс, % оклада":"Аванс, до вычета ₽";
+
+  const yr=calcYear(Y), c=yr[Mo-1];
+
+  // календарь
+  const g=$("grid"); g.textContent="";
+  ["пн","вт","ср","чт","пт","сб","вс"].forEach(s=>{const e=document.createElement("div");e.className="dow";e.textContent=s;g.appendChild(e)});
+  const first=(new Date(Y,Mo-1,1).getDay()+6)%7, days=new Date(Y,Mo,0).getDate(), marks=recOf(Y,Mo).d||{};
+  for(let i=0;i<first;i++) g.appendChild(document.createElement("div"));
+  const td=new Date();
+  const names={ab:"не работал",vac:"отпуск",sick:"больничный",ot:"работа в выходной"};
+  for(let d=1;d<=days;d++){
+    const t=dayType(Y,Mo,d), mk=marks[d], el=document.createElement("button");
+    el.type="button";
+    el.className="d"+(t.work?"":" off")+(t.hol?" hol":"")+(t.tr?" tr":"")+(t.sat?" sat":"")+(mk?" m-"+mk:"")
+      +(td.getFullYear()===Y&&td.getMonth()+1===Mo&&td.getDate()===d?" today":"");
+    el.textContent=d;
+    el.setAttribute("aria-label",d+" "+MG[Mo-1]+", "+(mk?names[mk]:t.hol?"праздник":t.work?"рабочий":"выходной"));
+    el.onclick=()=>tapDay(d,t);
+    el.style.setProperty("--i",first+d);
+    if(popDay===d&&!RM) el.classList.add("pop");
+    g.appendChild(el);
+  }
+  const cn=$("calnote");
+  cn.className="calnote"+(noteErr?" err":"");
+  cn.textContent=noteMsg||(!CAL[Y]?"Для "+Y+" года переносы выходных не учтены.":"Выберите отметку и нажмите на день. Повторное нажатие снимает отметку.");
+
+  let st=c.worked+" из "+c.total+" раб. дн.";
+  if(c.ot) st+=" + "+c.ot+" вых.";
+  $("dstat").textContent=st;
+
+  // итог
+  tween($("final"),c.fin,rub);
+  const nm=Mo===12?[Y+1,1]:[Y,Mo+1];
+  const pd=payDate(nm[0],nm[1],num(S.payday)||10), ad=payDate(Y,Mo,num(S.advday)||25);
+  $("when").innerHTML="<b>"+fmtDate(pd)+"</b><br>"+until(pd);
+  tween($("advamt"),c.advNet,rub);
+  // отпуск в этом месяце
+  const mStart=new Date(Y,Mo-1,1), mEnd=new Date(Y,Mo,0);
+  const vb=vacBlocks().filter(b=>b.e>=mStart&&b.s<=mEnd);
+  if(vb.length){
+    const b=vb[0], bp=blockPay(b), vpd=vacPayDate(b.s), r=restSpan(b.s,b.e);
+    $("payV").hidden=false;
+    $("vlbl").textContent="Отпускные · "+short(b.s)+" – "+short(b.e)+(vb.length>1?" и ещё "+(vb.length-1):"");
+    tween($("vamt"),bp.n,rub);
+    $("vwhen").innerHTML="<b>до "+fmtDate(vpd)+"</b> · "+until(vpd)+"<br>"+bp.days+" "+plural(bp.days,"день","дня","дней")+" отпуска, отдых "+r.days+" "+plural(r.days,"день","дня","дней");
+    const off=yearCalc(Y,{[keyOf(Y,Mo)]:Object.fromEntries(Object.entries(recOf(Y,Mo).d||{}).filter(([k,v])=>v!=="vac"))})[Mo-1];
+    const dz=c.fin-off.fin;
+    if(Math.abs(dz)>=1) $("when").innerHTML+='<span class="diff">'+(dz<0?"−":"+")+rub0(Math.abs(dz))+" из-за отпуска</span>";
+  } else $("payV").hidden=true;
+  $("advwhen").innerHTML="<b>"+fmtDate(ad)+"</b><br>"+until(ad);
+  const t0=new Date();t0.setHours(0,0,0,0);
+  const aDone=ad<t0, zDone=pd<t0;
+  $("payA").className="pay"+(aDone?" done":"")+(!aDone?" next":"");
+  renderTips();
+  $("payZ").className="pay"+(zDone?" done":"")+(aDone&&!zDone?" next":"");
+  const chips=[];
+  if(c.example) chips.push('<span class="chip warn">Пример для оклада 100 000 ₽ — введите свой</span>');
+  const fct=num(recOf(Y,Mo).fact);
+  if(fct>0) chips.push('<span class="chip" title="Сумма из справки 2-НДФЛ, сгруппирована по месяцу выплаты">По справке выплачено '+rub0(fct)+"</span>");
+  const er=c.gross-c.ded>0?c.tax/(c.gross-c.ded):rateAt(c.ytd);
+  chips.push('<span class="chip">НДФЛ '+String(Math.round(er*1000)/10).replace(".",",")+"%</span>");
+  if(c.vacPay||c.sickPay) chips.push('<span class="chip">Всего за месяц '+rub(c.net)+"</span>");
+  $("chips").innerHTML=chips.join("");
+
+  const R=[];
+  R.push(["Оклад за "+c.worked+" из "+c.total+" дн.",rub(c.base)]);
+  if(c.prem) R.push(["Премия "+S.bpct+"%",rub(c.prem)]);
+  if(c.otPay) R.push(["Работа в выходные, "+c.ot+" дн. × 2",rub(c.otPay)]);
+  if(c.bonus) R.push(["Разовая премия",rub(c.bonus)]);
+  if(c.north) R.push(["Районный коэфф. и надбавка",rub(c.north)]);
+  R.push(["Начислено",rub(c.sal),"tot"]);
+  if(c.ded) R.push(["Вычет на детей (не облагается)",rub(c.ded)]);
+  R.push(["НДФЛ","−"+rub(c.tSal),"neg"]);
+  R.push(["На руки",rub(c.salNet),"tot"]);
+  R.push(["Аванс"+(c.A.tax==="net"?" на руки":""),"−"+rub(c.advNet),"neg"]);
+  if(c.vacPay||c.sickPay){
+    R.push(["Отдельные выплаты","","head"]);
+    if(c.vacPay){R.push(["Отпускные, "+c.vac+" "+plural(c.vac,"день","дня","дней")+", на руки",rub(c.vacNet)]);R.push(["выплачиваются за 3 дня до начала отпуска — см. карточку вверху","","sub"])}
+    if(c.sickPay){R.push(["Больничный, "+c.sick+" "+plural(c.sick,"день","дня","дней")+" × "+Math.round(c.pct*100)+"%, на руки",rub(c.sickNet)]);R.push(["первые 3 дня — работодатель с ближайшей зарплатой, остальное — Соцфонд","","sub"])}
+  }
+  $("rows").innerHTML=R.map(([a,b,k])=>'<li class="'+(k==="head"||k==="sub"?k:"")+'"><span class="'+(k==="tot"?"tot":"")+'">'+a+'</span><span class="v '+(k==="tot"||k==="neg"?k:"")+'">'+b+"</span></li>").join("");
+  tweenRows($("rows")); popDay=null;
+  renderWhy(c);
+}
+
+let d0y=true;
+function renderYear(){
+  const yr=calcYear(Y), td=new Date();
+  const isPast=m=>Y<td.getFullYear()||(Y===td.getFullYear()&&m<td.getMonth()+1);
+  const isCur=m=>Y===td.getFullYear()&&m===td.getMonth()+1;
+  const G=yr.reduce((s,c)=>s+c.gross,0), T=yr.reduce((s,c)=>s+c.tax,0), N=G-T;
+  tween($("ynet"),N,rub0);
+  const ex=yr[0].example;
+  $("ychips").innerHTML=(ex?'<span class="chip warn">Пример для оклада 100 000 ₽</span>':"")
+    +'<span class="chip">Начислено '+rub0(G)+'</span><span class="chip">НДФЛ '+rub0(T)+"</span>";
+
+  // график
+  const W=340,H=170,pl=4,pr=4,pt=14,pb=22, max=Math.max(1,...yr.map(c=>c.net));
+  const step=(W-pl-pr)/12, bw=step*0.62;
+  let svg='<svg viewBox="0 0 '+W+" "+H+'" role="img" aria-label="На руки по месяцам">';
+  [0.5,1].forEach(f=>{const yy=pt+(H-pt-pb)*(1-f);svg+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:var(--line)" stroke-width="1"/>'});
+  yr.forEach((c,i)=>{
+    const h=(H-pt-pb)*c.net/max, x=pl+i*step+(step-bw)/2, yy=H-pb-h, m=i+1;
+    const fill=isPast(m)||isCur(m)?"var(--accent)":"var(--accent-soft)";
+    svg+='<rect x="'+x.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="3" style="--i:'+i+';fill:'+fill+(isCur(m)?';stroke:var(--ink);stroke-width:1.5':"")+'"/>';
+    svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle" font-size="10" style="fill:var(--muted)" font-family="-apple-system,sans-serif">'+MS[i]+"</text>";
+  });
+  svg+='<text x="'+(W-pr)+'" y="'+(pt-4)+'" text-anchor="end" font-size="10" style="fill:var(--muted)" font-family="-apple-system,sans-serif">'+rub0(max)+"</text>";
+  svg+="</svg>";
+  $("ychart").innerHTML=svg;
+
+  // порог 2,4 млн
+  const base0=num(S.ytd0)||0; let cum=base0, cross=0;
+  yr.forEach((c,i)=>{cum+=c.gross; if(!cross&&cum>2.4e6) cross=i+1});
+  const total=base0+G;
+  const bw2=Math.min(100,total/2.4e6*100).toFixed(1)+"%";
+  if(d0y&&!RM){$("ybar").style.width="0%";requestAnimationFrame(()=>requestAnimationFrame(()=>$("ybar").style.width=bw2))} else $("ybar").style.width=bw2;
+  $("ythr").textContent=cross
+    ? "Доход превысит 2,4 млн в "+(["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"][cross-1])+": с этой части НДФЛ будет 15%."
+    : "За год выйдет около "+rub0(total)+" — до порога ещё "+rub0(2.4e6-total)+", весь год ставка 13%.";
+
+  // таблица
+  $("ytbody").innerHTML=yr.map((c,i)=>{const m=i+1;
+    return '<tr data-m="'+m+'" class="'+(isCur(m)?"cur":!isPast(m)?"fut":"")+'"><td>'+cap(MN[i])+(c.fact?' <span class="hint">факт</span>':"")+"</td><td>"+int0(c.gross)+"</td><td>"+int0(c.tax)+"</td><td>"+int0(c.net)+"</td></tr>"}).join("")
+    +'<tr><td><b>Итого</b></td><td><b>'+int0(G)+"</b></td><td><b>"+int0(T)+"</b></td><td><b>"+int0(N)+"</b></td></tr>";
+  document.querySelectorAll("#ytbody tr[data-m]").forEach(tr=>tr.onclick=()=>{Mo=+tr.dataset.m;view="m";render();window.scrollTo(0,0)});
+}
+
+// ---------- планировщик отпуска ----------
+const iso=dt=>dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());
+const parseISO=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?new Date(+m[1],+m[2]-1,+m[3]):null};
+const addD=(dt,n)=>{const x=new Date(dt);x.setDate(x.getDate()+n);return x};
+const tOf=dt=>dayType(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
+const offDay=dt=>!tOf(dt).work;
+const short=dt=>dt.getDate()+" "+MG[dt.getMonth()]+(dt.getFullYear()!==new Date().getFullYear()?" "+dt.getFullYear():"");
+function vacSpan(a,b){ // календарные дни, праздники, дни отпуска
+  let cal=0,hol=0; for(let d=new Date(a);d<=b;d=addD(d,1)){cal++; if(tOf(d).hol) hol++}
+  return {cal,hol,charged:cal-hol};
+}
+function restSpan(a,b){ // полный отдых с прилегающими выходными
+  let s=new Date(a),e=new Date(b);
+  for(let i=0;i<20&&offDay(addD(s,-1));i++) s=addD(s,-1);
+  for(let i=0;i<20&&offDay(addD(e,1));i++) e=addD(e,1);
+  return {s,e,days:Math.round((e-s)/864e5)+1};
+}
+function vacPayDate(a){ // не позднее чем за 3 дня до начала
+  let d=addD(a,-3); for(let i=0;i<20&&!tOf(d).work;i++) d=addD(d,-1); return d;
+}
+function simMarks(a,b,on){ // табель с этим отпуском (on) или без него
+  const sim={};
+  for(let d=new Date(a);d<=b;d=addD(d,1)){
+    const k=keyOf(d.getFullYear(),d.getMonth()+1);
+    if(!sim[k]) sim[k]={...(recOf(d.getFullYear(),d.getMonth()+1).d||{})};
+    if(on&&!tOf(d).hol) sim[k][d.getDate()]="vac";
+    if(!on&&sim[k][d.getDate()]==="vac") delete sim[k][d.getDate()];
+  }
+  return sim;
+}
+const sameMarks=sim=>Object.keys(sim).every(k=>JSON.stringify(sim[k])===JSON.stringify(recOf(+k.slice(0,4),+k.slice(5)).d||{}));
+function monthsIn(a,b){const out=[];let y=a.getFullYear(),m=a.getMonth()+1;
+  while(y<b.getFullYear()||(y===b.getFullYear()&&m<=b.getMonth()+1)){out.push([y,m]);m++;if(m>12){m=1;y++}} return out}
+function yearCalc(y,sim){SIM=sim;try{return calcYear(y)}finally{SIM=null}}
+
+function bestWindows(kind){
+  const lim=kind==="short"?[3,7]:kind==="mid"?[7,14]:[14,28];
+  const t0=new Date();t0.setHours(0,0,0,0);
+  const res=[];
+  for(let i=1;i<=400;i++){
+    const s=addD(t0,i);
+    if(!tOf(s).work||!offDay(addD(s,-1))) continue;   // начинаем в первый рабочий день после выходных
+    let charged=0;
+    for(let j=0;j<45;j++){
+      const e=addD(s,j);
+      if(!tOf(e).hol) charged++;
+      if(charged>lim[1]) break;
+      if(charged<lim[0]||!tOf(e).work||!offDay(addD(e,1))) continue; // заканчиваем в последний рабочий день перед выходными
+      const r=restSpan(s,e);
+      res.push({s,e,charged,rest:r.days,rs:r.s,re:r.e,bonus:r.days-charged,ratio:r.days/charged});
+    }
+  }
+  res.sort((x,y)=>y.ratio-x.ratio||y.bonus-x.bonus||x.s-y.s);
+  const pick=[];
+  for(const w of res){ if(pick.some(p=>!(w.re<p.rs||w.rs>p.re))) continue; pick.push(w); if(pick.length>=5) break }
+  return pick.sort((a,b)=>a.s-b.s);
+}
+
+function vacBlocks(){ // непрерывные отпуска из табеля (праздники внутри не разрывают)
+  const ds=[];
+  for(const k in M){const y=+k.slice(0,4),m=+k.slice(5),d=M[k].d||{};for(const x in d) if(d[x]==="vac") ds.push(new Date(y,m-1,+x))}
+  ds.sort((a,b)=>a-b);
+  const out=[];
+  for(const d of ds){
+    const last=out[out.length-1];
+    if(last){let g=addD(last.e,1);while(g<d&&tOf(g).hol) g=addD(g,1); if(+g===+d){last.e=d;continue}}
+    out.push({s:d,e:d});
+  }
+  return out;
+}
+const vacPerDay=(y,m)=>{const c=calcYear(y)[m-1];return c.vac?{g:c.vacPay/c.vac,n:c.vacNet/c.vac}:{g:0,n:0}};
+function blockPay(b){let g=0,n=0,days=0;for(let d=new Date(b.s);d<=b.e;d=addD(d,1)){if(tOf(d).hol) continue;const p=vacPerDay(d.getFullYear(),d.getMonth()+1);g+=p.g;n+=p.n;days++}return {g,n,days}}
+function vstatus(t){note(t,false)}
+document.querySelectorAll("#vlen button").forEach(b=>b.onclick=()=>{S.vlen=b.dataset.l;save();render()});
+function renderTips(){
+  document.querySelectorAll("#vlen button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.l===(S.vlen||"mid"))));
+  if(!$("vbest").open) return;
+  const W=bestWindows(S.vlen||"mid"), blocks=vacBlocks();
+  $("vtips").innerHTML=W.length?W.map((w,i)=>{const on=blocks.some(b=>+b.s===+w.s&&+b.e===+w.e);
+    return '<button type="button" class="tip" data-i="'+i+'" aria-pressed="'+on+'"><span><b>'+short(w.s)+" – "+short(w.e)+"</b><small>"+w.charged+" "+plural(w.charged,"день","дня","дней")+" отпуска → отдых "+short(w.rs)+" – "+short(w.re)+(on?" · отмечено":"")+"</small></span>"
+    +'<span class="ratio">'+w.rest+" "+plural(w.rest,"день","дня","дней")+"</span></button>"}).join(""):'<span class="hint">Не нашлось вариантов на ближайший год.</span>';
+  document.querySelectorAll("#vtips .tip").forEach(b=>b.onclick=()=>{
+    const w=W[+b.dataset.i], on=b.getAttribute("aria-pressed")==="true", sim=simMarks(w.s,w.e,!on);
+    for(const k in sim){ if(!M[k]) M[k]={d:{},bonus:""}; M[k].d=sim[k] }
+    save(); Y=w.s.getFullYear(); Mo=w.s.getMonth()+1;
+    note(on?"Отпуск "+short(w.s)+" – "+short(w.e)+" убран из табеля.":"Отпуск "+short(w.s)+" – "+short(w.e)+" отмечен. Нажмите на вариант ещё раз, чтобы убрать.");
+    render(); window.scrollTo({top:0,behavior:"smooth"});
+  });
+}
+$("vbest").addEventListener("toggle",()=>renderTips());
+
+// ---------- справки 2-НДФЛ ----------
+// Предельная база для взносов: нужна для среднего заработка по больничному
+const SICK_CODES=["2000","2002","2012","2013"];
+async function inflate(bytes){
+  if(typeof DecompressionStream==="undefined") throw new Error("nozip");
+  const ds=new DecompressionStream("deflate-raw");
+  const out=new Blob([bytes]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(out).arrayBuffer());
+}
+async function unzip(buf){ // минимальный разбор ZIP: только нужные XML
+  const u=new Uint8Array(buf), v=new DataView(buf), files=[];
+  let e=-1; for(let i=u.length-22;i>=Math.max(0,u.length-70000);i--){if(v.getUint32(i,true)===0x06054b50){e=i;break}}
+  if(e<0) throw new Error("notzip");
+  const n=v.getUint16(e+10,true); let p=v.getUint32(e+16,true);
+  for(let k=0;k<n;k++){
+    if(v.getUint32(p,true)!==0x02014b50) break;
+    const method=v.getUint16(p+10,true), csize=v.getUint32(p+20,true), nl=v.getUint16(p+28,true), xl=v.getUint16(p+30,true), cl=v.getUint16(p+32,true), off=v.getUint32(p+42,true);
+    const name=new TextDecoder().decode(u.subarray(p+46,p+46+nl));
+    p+=46+nl+xl+cl;
+    if(!/\.(xml|pdf)$/i.test(name)) continue;
+    const lnl=v.getUint16(off+26,true), lxl=v.getUint16(off+28,true), start=off+30+lnl+lxl;
+    const raw=u.subarray(start,start+csize);
+    files.push({name,bytes:method===0?raw:await inflate(raw)});
+  }
+  return files;
+}
+// lines: [[token,...],...] в порядке чтения (страницы подряд)
+function parsePdfLines(lines){
+  const out=[]; let cur=null, rate=13, inTbl=false, wantOrg=false;
+  const AMT=/^(?:\d{1,3}(?:[\s  ]\d{3})+|\d+)[.,]\d{2}$/;
+  const num=s=>parseFloat(String(s).replace(/[\s  ]/g,"").replace(",","."));
+  for(const raw of lines){
+    // склеиваем «101» + «900,00» в одну сумму, если PDF разбил число на части
+    const toks=[];
+    for(const t of raw){const p=toks[toks.length-1];
+      if(p!==undefined&&/^\d{1,3}(?:[\s  ]\d{3})*$/.test(p)&&/^\d{3}(?:[\s  ]\d{3})*(?:[.,]\d{2})?$/.test(t)&&!/^\d{4}$/.test(t)&&toks.length>=2&&/^\d{4}$/.test(toks[toks.length-2])) toks[toks.length-1]=p+" "+t;
+      else toks.push(t)}
+    const line=toks.join(" ");
+    if(/СПРАВКА О ДОХОДАХ/i.test(line)){cur={year:0,org:"",inn:"",kpp:"",items:[],total:null};out.push(cur);inTbl=false;wantOrg=false;continue}
+    if(!cur) continue;
+    let m;
+    if(!cur.year&&(m=/за\s+(\d{4})\s+год/i.exec(line))) cur.year=+m[1];
+    if(!cur.inn&&/КПП/.test(line)&&(m=/ИНН\D{0,8}(\d{10})\b/.exec(line))){cur.inn=m[1];const k=/КПП\D{0,8}(\d{9})\b/.exec(line);if(k)cur.kpp=k[1]}
+    if(!cur.org&&/^Налоговый агент\s+\S/i.test(line)) cur.org=line.replace(/^Налоговый агент\s*/i,"").trim();
+    else if(!cur.org&&wantOrg&&!/^(ИНН|КПП|Код|ОКТМО|Телефон|Форма|\d)/i.test(line)&&/[А-ЯA-Z«"]/.test(line)) {cur.org=line.replace(/^Наименование:?\s*/i,"").trim();wantOrg=false}
+    if(/о налоговом агенте/i.test(line)) wantOrg=true;
+    if(/физическом лице/i.test(line)) wantOrg=false;
+    if((m=/облагаемые по ставке\s*(\d+)/i.exec(line))){rate=+m[1];inTbl=true;continue}
+    if(/^\s*[4-6]\.\s/.test(line)||/Стандартные, социальные/i.test(line)) inTbl=false;
+    if((m=/Общая сумма дохода\s+((?:\d{1,3}(?:[\s  ]\d{3})+|\d+)[.,]\d{2})/i.exec(line))) cur.total=(cur.total||0)+num(m[1]);
+    if(!inTbl) continue;
+    for(let i=0;i<toks.length;i++){
+      const a=toks[i],b=toks[i+1],c=toks[i+2];
+      if(/^(0?[1-9]|1[0-2])$/.test(a)&&/^\d{4}$/.test(b||"")&&AMT.test(c||"")){
+        let ded=0,j=i+3;
+        if(/^\d{3}$/.test(toks[j]||"")&&AMT.test(toks[j+1]||"")){ded=num(toks[j+1]);j+=2}
+        cur.items.push([+a,b,num(c),ded,rate]); i=j-1;
+      }
+    }
+  }
+  return out.filter(x=>x.year&&x.items.length);
+}
+let pdfjsP=null;
+function loadPdfjs(){
+  if(pdfjsP) return pdfjsP;
+  pdfjsP=new Promise((ok,fail)=>{
+    const sc=document.createElement("script"); sc.src="lib/pdf.js";
+    sc.onload=()=>{try{window.pdfjsLib.GlobalWorkerOptions.workerSrc="lib/pdf.worker.js";ok(window.pdfjsLib)}catch(e){fail(e)}};
+    sc.onerror=()=>{pdfjsP=null;fail(new Error("nopdflib"))};
+    document.head.appendChild(sc);
+  });
+  return pdfjsP;
+}
+async function readPdf(bytes){
+  const lib=await loadPdfjs();
+  const doc=await lib.getDocument({data:bytes,isEvalSupported:false,disableFontFace:true,useSystemFonts:false}).promise;
+  const lines=[];
+  for(let i=1;i<=doc.numPages;i++){
+    const tc=await (await doc.getPage(i)).getTextContent(), rows={};
+    tc.items.forEach(it=>{const t=(it.str||"").trim();if(!t)return;const y=Math.round(it.transform[5]/2)*2;(rows[y]=rows[y]||[]).push([it.transform[4],t])});
+    Object.keys(rows).sort((a,b)=>b-a).forEach(y=>lines.push(rows[y].sort((a,b)=>a[0]-b[0]).map(x=>x[1])));
+  }
+  doc.destroy&&doc.destroy();
+  const list=parsePdfLines(lines);
+  if(!list.length) throw new Error(lines.length?"notndfl":"scan");
+  return list.map(sp=>({id:sp.year+"-"+sp.inn+"-"+sp.kpp,year:sp.year,org:sp.org||"Налоговый агент",inn:sp.inn,kpp:sp.kpp,corr:"0",items:sp.items,src:"pdf",
+    check:sp.total!=null?Math.abs(sp.items.reduce((a,x)=>a+x[2],0)-sp.total)<1:null}));
+}
+function decodeXml(bytes){
+  const head=new TextDecoder("latin1").decode(bytes.subarray(0,200));
+  const enc=/encoding=["']([^"']+)/i.exec(head);
+  try{return new TextDecoder(enc&&/1251/.test(enc[1])?"windows-1251":"utf-8").decode(bytes)}catch(e){return new TextDecoder().decode(bytes)}
+}
+function parseNdfl(text){
+  const doc=new DOMParser().parseFromString(text,"application/xml");
+  if(doc.getElementsByTagName("parsererror").length) throw new Error("xml");
+  const roots=[...doc.getElementsByTagName("Документ")]; if(!roots.length) throw new Error("notndfl");
+  const list=roots.map(parseNdflDoc).filter(Boolean);
+  if(!list.length) throw new Error("notndfl");
+  return list;
+}
+function parseNdflDoc(root){
+  const doc=root;
+  const year=+root.getAttribute("ОтчетГод"); if(!year) return null;
+  const first=(...t)=>{for(const x of t){const e=doc.getElementsByTagName(x)[0];if(e) return e}return null};
+  const ul=first("СвНАЮЛ","НПЮЛ"), fl=first("СвНАФЛ","НПФЛ");
+  const org=((ul&&ul.getAttribute("НаимОрг"))||(fl?"ИП":"")||"Налоговый агент").replace(/\s+/g," ").trim();
+  const inn=(ul&&ul.getAttribute("ИННЮЛ"))||"", kpp=(ul&&ul.getAttribute("КПП"))||"";
+  const sp=first("НДФЛ-2","СправДох"), num=sp?sp.getAttribute("НомСпр"):"", corr=sp?sp.getAttribute("НомКорр"):"";
+  const items=[];
+  for(const sd of doc.getElementsByTagName("СведДох")){
+    const rate=+sd.getAttribute("Ставка");
+    for(const d of sd.getElementsByTagName("СвСумДох")){
+      const ded=[...d.getElementsByTagName("СвСумВыч")].reduce((a,x)=>a+(+x.getAttribute("СумВычет")||0),0);
+      items.push([+d.getAttribute("Месяц"),d.getAttribute("КодДоход"),+d.getAttribute("СумДоход")||0,r2(ded),rate]);
+    }
+  }
+  return {id:year+"-"+inn+"-"+kpp,year,org,inn,kpp,corr,items,src:"xml"};
+}
+function applyNdfl(dry){
+  const seen={};
+  N.forEach(sp=>{if(!sp.kpp) sp.kpp=String(sp.id||"").split("-")[2]||"";sp.id=sp.year+"-"+(sp.inn||"")+"-"+sp.kpp;seen[sp.id]=sp});
+  N=Object.values(seen);
+  const t=new Date(), cy=t.getFullYear(), cm=t.getMonth()+1;
+  // 1) факт по месяцам
+  for(const k in M) if(M[k].factSrc==="ndfl"){delete M[k].fact;delete M[k].factSrc}
+  const fact={};
+  N.forEach(sp=>sp.items.forEach(([m,code,sum,ded,rate])=>{
+    if(code==="1530"||code==="1532"||rate===30||rate===35) return;   // ценные бумаги и прочие ставки — отдельно
+    const k=keyOf(sp.year,m); fact[k]=(fact[k]||0)+sum-ded;
+  }));
+  const done=[];
+  for(const k in fact){
+    const y=+k.slice(0,4), m=+k.slice(5);
+    if(y>cy||(y===cy&&m>=cm)) continue;      // текущий и будущие месяцы считаем по окладу
+    if(!M[k]) M[k]={d:{},bonus:""};
+    M[k].fact=String(r2(fact[k])); M[k].factSrc="ndfl"; done.push(k);
+  }
+  // 2) средний для больничного: два предыдущих года
+  const res={done,sick:null,vac:null,miss:[]};
+  const y1=cy-2,y2=cy-1, sb={[y1]:0,[y2]:0}, has={[y1]:false,[y2]:false};
+  N.forEach(sp=>{if(sp.year in sb){has[sp.year]=true;sp.items.forEach(([m,code,sum])=>{if(SICK_CODES.includes(code)) sb[sp.year]+=sum})}});
+  if(has[y1]&&has[y2]){
+    const tot=Math.min(sb[y1],BASE_LIM[y1]||Infinity)+Math.min(sb[y2],BASE_LIM[y2]||Infinity);
+    res.sick=r2(tot/730); if(!dry) S.avgsick=String(res.sick);
+  } else [y1,y2].forEach(y=>{if(!has[y]) res.miss.push(y)});
+  // 3) средний для отпуска: 12 полных месяцев до текущего, зарплата и премии
+  let vs=0; const months=new Set();
+  for(let i=1;i<=12;i++){let y=cy,m=cm-i;while(m<1){m+=12;y--}
+    N.forEach(sp=>{if(sp.year!==y) return;sp.items.forEach(([mm,code,sum])=>{if(mm!==m) return;if(code==="2000"||code==="2002"){vs+=sum;if(code==="2000") months.add(y+"-"+m)}})});
+  }
+  if(months.size>=10){res.vac=r2(vs/months.size/29.3);if(!dry) S.avgvac=String(res.vac);res.vacMonths=months.size}
+  else res.vacShort=months.size;
+  if(!N.some(sp=>sp.year===cy)) res.miss.push(cy);
+  save();
+  return res;
+}
+function renderNdfl(res){
+  const list=$("ndfllist");
+  const sorted=[...N].sort((a,b)=>b.year-a.year||a.org.localeCompare(b.org));
+  list.innerHTML=sorted.map(sp=>{
+    const tot=sp.items.reduce((a,x)=>a+(x[1]==="1530"||x[1]==="1532"?0:x[2]),0);
+    const onlySec=sp.items.length&&sp.items.every(x=>x[1]==="1530"||x[1]==="1532");
+    return '<li><span class="yr">'+sp.year+'</span><span class="info"><b>'+sp.org.replace(/[<>&]/g,"")+'</b><small>'+(onlySec?"доход от ценных бумаг — в расчёт не идёт":rub0(tot)+" · "+sp.items.length+" "+plural(sp.items.length,"строка","строки","строк"))+'</small></span><button type="button" class="del" data-id="'+sp.id+'" aria-label="Удалить справку">×</button></li>'}).join("");
+  list.querySelectorAll(".del").forEach(b=>b.onclick=()=>{N=N.filter(x=>x.id!==b.dataset.id);const r=applyNdfl();renderNdfl(r);syncFields();render();$("ndflstatus").textContent="Справка удалена."});
+  const box=$("ndflsum");
+  if(!N.length){box.innerHTML="";return}
+  const r=res||applyNdfl(true);
+  const L=[];
+  if(r.done.length){const ys=[...new Set(r.done.map(k=>k.slice(0,4)))].sort();L.push("Фактический доход: <b>"+r.done.length+" "+plural(r.done.length,"месяц","месяца","месяцев")+"</b> ("+ys.join(", ")+")")}
+  if(r.sick) L.push("Средний для больничного: <b>"+rub(r.sick)+"</b> в день"+(r.sick>sickCap(new Date().getFullYear())?" (выплата ограничена "+rub(sickCap(new Date().getFullYear()))+")":""));
+  if(r.vac) L.push("Средний для отпуска: <b>"+rub(r.vac)+"</b> в день, за "+r.vacMonths+" "+plural(r.vacMonths,"месяц","месяца","месяцев"));
+  if(!r.sick) L.push("Средний для больничного не изменён: нужны справки за оба прошлых года");
+  if(!r.vac) L.push("Средний для отпуска не изменён: нужны справки за последние 12 месяцев");
+  const guess=guessOklad();
+  const miss=[...new Set(r.miss)].sort();
+  box.innerHTML="<div>Заполнено из справок:</div><ul>"+L.map(x=>"<li>"+x+"</li>").join("")+"</ul>"
+    +(guess&&Math.round(num(S.oklad))!==guess?'<div class="suggest"><span>Похоже, ваш оклад <b>'+rub0(guess)+'</b></span><button type="button" class="btn" id="useok">Подставить</button></div>':"")
+    +(miss.length?'<div class="hint" style="margin-top:6px">Для точного расчёта добавьте справки за '+miss.join(" и ")+" год"+(miss.length>1?"ы":"")+". Если работодателей было несколько, нужна справка от каждого.</div>":"");
+}
+function guessOklad(){ // самая частая сумма зарплаты (код 2000) за последние 12 месяцев
+  const t=new Date(), cy=t.getFullYear(), cm=t.getMonth()+1, cnt={};
+  N.forEach(sp=>sp.items.forEach(([m,code,sum])=>{
+    if(code!=="2000"||sum<1000) return;
+    const age=(cy-sp.year)*12+(cm-m); if(age<1||age>12) return;
+    const k=Math.round(sum); cnt[k]=(cnt[k]||0)+1;
+  }));
+  let best=0,bc=0; for(const k in cnt) if(cnt[k]>bc){bc=cnt[k];best=+k}
+  return bc>=3?best:0;
+}
+document.addEventListener("click",e=>{if(e.target&&e.target.id==="useok"){const g=guessOklad();if(g){S.oklad=String(g);save();syncAll();render();$("ndflstatus").className="status";$("ndflstatus").textContent="Оклад "+rub0(g)+" подставлен. Проверьте его в настройках."}}});
+function syncFields(){["avgvac","avgsick"].forEach(id=>$(id).value=S[id]??"")}
+const FIELDS=["oklad","advday","payday","bpct","rk","sn","kids","ytd0","stazh","avgvac","avgsick"];
+function syncAll(){FIELDS.forEach(id=>$(id).value=S[id]??"");for(const k in PREV) delete PREV[k];applyEye();renderNdfl()}
+$("ndflfile").addEventListener("change",async e=>{
+  const st=$("ndflstatus"); st.className="status"; st.textContent="Читаю…";
+  const files=[...e.target.files]; let added=0,dup=0; const errs=[], warn=[];
+  for(const f of files){
+    try{
+      const buf=await f.arrayBuffer();
+      const head=new Uint8Array(buf.slice(0,5));
+      const isZip=head[0]===0x50&&head[1]===0x4b, isPdf=String.fromCharCode(...head)==="%PDF-";
+      let parts=isZip?await unzip(buf):[{name:f.name,bytes:new Uint8Array(buf)}];
+      if(!parts.length) throw new Error("noxml");
+      if(parts.some(x=>/\.xml$/i.test(x.name))) parts=parts.filter(x=>/\.xml$/i.test(x.name)); // XML точнее PDF
+      const found=[];
+      for(const x of parts){
+        const b=x.bytes, pdf=(isPdf&&!isZip)||/\.pdf$/i.test(x.name)||(b[0]===0x25&&b[1]===0x50&&b[2]===0x44&&b[3]===0x46);
+        if(pdf){ (await readPdf(b)).forEach(sp=>{found.push(sp);if(sp.check===false) warn.push(f.name+": суммы в PDF не сошлись с итогом, проверьте справку")}) }
+        else found.push(...parseNdfl(decodeXml(b)));
+      }
+      for(const sp of found){
+        const i=N.findIndex(o=>o.id===sp.id);
+        if(i>=0){ if((+sp.corr||0)>=(+N[i].corr||0)) N[i]=sp; dup++ } else {N.push(sp);added++}
+      }
+    }catch(err){
+      const m=String(err&&err.message);
+      errs.push(f.name+": "+(m==="nozip"?"этот браузер не умеет распаковывать архив — распакуйте его и выберите файл .xml или .pdf":m==="noxml"?"в архиве нет справки":m==="notndfl"?"не похоже на справку 2-НДФЛ":m==="scan"?"в PDF нет текста — похоже, это скан или фото":m==="nopdflib"?"не загрузился модуль чтения PDF, проверьте интернет":"не удалось прочитать файл"));
+    }
+  }
+  e.target.value="";
+  const res=applyNdfl(); renderNdfl(res); syncFields();
+  let autoOk=0;
+  if(!(num(S.oklad)>0)){const g=guessOklad();if(g){S.oklad=String(g);save();syncAll();autoOk=g}}
+  render();
+  if(errs.length||warn.length){st.className="status err";st.textContent=[...errs,...warn].join(". ")+(added||dup?". Остальное загружено.":"")}
+  else st.textContent=added?"Загружено справок: "+added+(dup?", обновлено: "+dup:"")+".":dup?"Эти справки уже были загружены — данные обновлены.":"";
+  if(autoOk) st.textContent+=" Оклад "+rub0(autoOk)+" определён по справке — проверьте его.";
+});
+renderNdfl();
+
+// ---------- профили ----------
+function renderProf(){
+  $("proflist").innerHTML=P.list.map(p=>'<button type="button" data-id="'+p.id+'" aria-pressed="'+(p.id===P.cur)+'">'+(p.name||"Без имени").replace(/[<>&"]/g,"")+"</button>").join("");
+  $("proflist").querySelectorAll("button").forEach(b=>b.onclick=()=>switchProf(b.dataset.id));
+  if(document.activeElement!==$("pname")) $("pname").value=curName();
+  $("pdel").hidden=P.list.length<2;
+}
+function switchProf(id){
+  if(id===P.cur) return;
+  save(); P.cur=id; saveP(); load(); syncAll();
+  Y=new Date().getFullYear(); Mo=new Date().getMonth()+1; view="m"; dir=2;
+  $("pstatus").textContent=""; renderProf(); render();
+}
+$("pname").addEventListener("input",()=>{const p=P.list.find(x=>x.id===P.cur);if(p){p.name=$("pname").value.slice(0,24);saveP();renderProf();greet()}});
+$("padd").onclick=()=>{
+  const name=$("pnew").value.trim().slice(0,24);
+  if(!name){$("pstatus").className="status err";$("pstatus").textContent="Введите имя для нового профиля.";return}
+  const id="p"+Date.now().toString(36);
+  P.list.push({id,name}); $("pnew").value=""; saveP(); switchProf(id);
+  $("pstatus").className="status"; $("pstatus").textContent="Профиль «"+name+"» создан. Введите оклад вверху.";
+};
+let pArm=null;
+$("pdel").onclick=()=>{
+  const b=$("pdel");
+  if(!b.classList.contains("armed")){b.classList.add("armed");b.textContent="Нажмите ещё раз — данные профиля удалятся";clearTimeout(pArm);pArm=setTimeout(()=>{b.classList.remove("armed");b.textContent="Удалить этот профиль"},4000);return}
+  b.classList.remove("armed"); b.textContent="Удалить этот профиль";
+  try{localStorage.removeItem(dataKey())}catch(e){}
+  P.list=P.list.filter(x=>x.id!==P.cur); P.cur=P.list[0].id; saveP(); load(); syncAll(); renderProf(); render();
+  $("pstatus").className="status"; $("pstatus").textContent="Профиль удалён.";
+};
+renderProf();
+$("ver").textContent="Версия "+APP_VER;
+
+// ---------- резервная копия и удаление ----------
+const enc=o=>"ZP3:"+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const clean=s=>String(s||"").normalize("NFKC").replace(/[^A-Za-z0-9+/=:_-]/g,"");
+const dec=raw=>{const s=clean(raw);const parts=s.split(/ZP3:/i).filter(Boolean);
+  for(let i=parts.length-1;i>=0;i--){
+    let b=parts[i].replace(/-/g,"+").replace(/_/g,"/").replace(/=+/g,"");
+    while(b.length%4) b+="=";
+    try{const o=JSON.parse(decodeURIComponent(escape(atob(b))));if(o&&o.S) return o}catch(e){}
+    try{const o=JSON.parse(atob(b));if(o&&o.S) return o}catch(e){}
+  }
+  throw new Error("bad code")};
+function bstatus(s,err){const e=$("bstatus");e.textContent=s;e.className="status"+(err?" err":"")}
+$("exp").onclick=()=>{
+  const code=enc({v:3,S,M,N}); const ta=$("code");
+  const fallback=()=>{ta.value=code;ta.focus();ta.select();bstatus("Код выделен в поле — скопируйте его вручную, потом очистите поле.")};
+  try{navigator.clipboard.writeText(code).then(()=>bstatus("Код скопирован. Сохраните его в надёжном месте."),fallback)}catch(e){fallback()}
+};
+function restore(raw){
+  try{
+    const o=dec(raw); if(!o||typeof o!=="object"||!o.S) throw 0;
+    S={...DEF,...o.S}; M=o.M||{}; N=Array.isArray(o.N)?o.N:[]; save();
+    $("code").value=""; bstatus("Данные восстановлены."); syncAll(); render();
+  }catch(e){const n=clean(raw).length;bstatus("Не получилось прочитать код ("+n+" симв."+(n?", начало «"+clean(raw).slice(0,8)+"…»":"")+"). Проверьте, что скопировали его целиком.",true)}
+}
+$("imp").onclick=()=>restore($("code").value);
+$("pasteimp").onclick=async()=>{
+  try{const t=await navigator.clipboard.readText();if(!t){bstatus("Буфер обмена пуст — сначала скопируйте код.",true);return}restore(t)}
+  catch(e){bstatus("Нет доступа к буферу обмена. Вставьте код в поле вручную.",true)}
+};
+let armT=null;
+$("wipe").onclick=()=>{
+  const b=$("wipe");
+  if(!b.classList.contains("armed")){b.classList.add("armed");b.textContent="Нажмите ещё раз, чтобы удалить";clearTimeout(armT);armT=setTimeout(()=>{b.classList.remove("armed");b.textContent="Удалить всё"},4000);return}
+  try{localStorage.removeItem(dataKey());if(P.cur==="main"){localStorage.removeItem("zp2-settings");localStorage.removeItem("zp2-months");localStorage.removeItem("zp")}}catch(e){}
+  load(); syncAll();
+  b.classList.remove("armed"); b.textContent="Данные удалены"; setTimeout(()=>b.textContent="Удалить всё",2500); render();
+};
+
+render();
+setTimeout(()=>document.body.classList.remove("boot"),1200);
+
+// офлайн-режим (работает на собственном сайте)
+if("serviceWorker" in navigator && /github\.io$|localhost/.test(location.hostname)){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
